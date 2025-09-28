@@ -1,0 +1,11 @@
+/* styles/globals.css */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* その他のグローバルなスタイルがあればここに追記 */
+body {
+  background-color: #1a202c;
+  color: #e2e8f0;
+}
