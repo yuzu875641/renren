@@ -1,52 +1,86 @@
+// pages/watch.tsx
+
+import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
-import { fetchWithInvidiousFallback } from '../lib/invidious';
-import { getYouTubeClient } from '../lib/youtubei';
-import { GetServerSideProps } from 'next';
+import { useState, useEffect } from 'react';
 
-const WatchPage = ({ videoData, relatedVideos }) => {
-  if (!videoData) return <div>動画が見つかりませんでした。</div>;
-  return (
-    <div className="container mx-auto p-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-2">
-          <video src={videoData.formatStreams[0].url} controls className="w-full rounded-lg" />
-          <h1 className="text-2xl font-bold mt-4">{videoData.title}</h1>
-        </div>
-        <div>
-          <h2 className="text-xl font-bold mb-4">関連動画</h2>
-          {relatedVideos.map((video) => (
-            <div key={video.id} className="flex gap-4 mb-4">
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
+// watchページのデータ型を定義
+interface VideoData {
+  id: string;
+  title: string;
+  author: string;
+  views: string;
+  description: string;
+}
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { v } = context.query;
-  let videoData = null;
-  let relatedVideos = [];
+const WatchPage: NextPage = () => {
+  const router = useRouter();
+  const { v } = router.query;
+  const [videoData, setVideoData] = useState<VideoData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  try {
-    videoData = await fetchWithInvidiousFallback(`videos/${v}`);
-    
-    const yt = await getYouTubeClient();
-    const searchResults = await yt.search(videoData.title, { type: 'video' });
-    relatedVideos = searchResults.videos;
+  useEffect(() => {
+    if (!v) {
+      setLoading(false);
+      return;
+    }
 
-  } catch (error) {
-    console.error(error);
+    const fetchVideoData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        // APIルートから動画データを取得
+        const res = await fetch(`/api/video?v=${encodeURIComponent(v as string)}`);
+        const data = await res.json();
+
+        if (res.ok) {
+          setVideoData(data);
+        } else {
+          setError(data.error || 'Failed to fetch video data.');
+        }
+      } catch (e) {
+        setError('An unexpected error occurred.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVideoData();
+  }, [v]);
+
+  if (loading) {
+    return <div>Loading...</div>;
   }
 
-  return {
-    props: {
-      videoData,
-      relatedVideos: relatedVideos.slice(0, 20), 
-    },
-  };
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  if (!videoData) {
+    return <div>No video found.</div>;
+  }
+
+  // YouTubeの動画埋め込みURL
+  const videoUrl = `https://www.youtube.com/embed/${videoData.id}`;
+
+  return (
+    <div>
+      <h1>{videoData.title}</h1>
+      <p>by {videoData.author}</p>
+      <p>{videoData.views} views</p>
+      <iframe
+        width="560"
+        height="315"
+        src={videoUrl}
+        title={videoData.title}
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      ></iframe>
+      <p>{videoData.description}</p>
+    </div>
+  );
 };
 
 export default WatchPage;
