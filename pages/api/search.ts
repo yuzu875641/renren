@@ -1,9 +1,7 @@
 // src/pages/api/search.ts
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-// 修正前: import { getYouTubeClient } from '../../lib/youtubei';
-// 修正後:
-import { getYouTubeClient } from '../lib/youtubei';
+import { getYouTubeClient } from '@/lib/youtubei';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { q } = req.query;
