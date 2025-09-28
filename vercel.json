@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/channel/:channelId",
+      "destination": "/channel/:channelId"
+    },
+    {
+      "source": "/playlist/:listId",
+      "destination": "/playlist/:listId"
+    },
+    {
+      "source": "/search/:q",
+      "destination": "/search/:q"
+    }
+  ]
+}
