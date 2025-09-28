@@ -14,77 +14,57 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const youtube = await getYouTubeClient();
     const searchResults = await youtube.search(q as string);
 
-    // 異なる型の検索結果をフィルタリングし、共通のプロパティを持つオブジェクトに変換
-    // 存在しないプロパティにはオプショナルチェーン (?.) を使用
-    const videos = (searchResults.videos ?? [])
-      .filter((v: any) => v.id && v.thumbnails && v.title)
-      .map((v: any) => ({
+    // searchResults を `any` 型として扱い、プロパティの存在を気にしないようにする
+    const results = [
+      ...(searchResults.videos as any[] ?? []).map((v: any) => ({
         id: v.id,
         type: 'video',
-        title: v.title.text,
+        title: v.title?.text || 'タイトルなし',
         author: v.author?.name || '不明なチャンネル',
         views: v.metadata?.view_count || 'N/A',
-        thumbnailUrl: v.thumbnails[0].url,
-      }));
-
-    const channels = (searchResults.channels ?? [])
-      .filter((c: any) => c.id && c.thumbnails && c.title)
-      .map((c: any) => ({
+        thumbnailUrl: v.thumbnails?.[0]?.url || '',
+      })),
+      ...(searchResults.channels as any[] ?? []).map((c: any) => ({
         id: c.id,
         type: 'channel',
-        title: c.title.text,
-        author: c.title.text,
+        title: c.title?.text || 'タイトルなし',
+        author: c.title?.text || '不明なチャンネル',
         views: 'N/A',
-        thumbnailUrl: c.thumbnails[0].url,
-      }));
-
-    // liveプロパティが欠損している場合に備え、オプショナルチェーンと空の配列を使用
-    const live = (searchResults.live ?? [])
-      .filter((l: any) => l.id && l.thumbnails && l.title)
-      .map((l: any) => ({
+        thumbnailUrl: c.thumbnails?.[0]?.url || '',
+      })),
+      ...(searchResults.live as any[] ?? []).map((l: any) => ({
         id: l.id,
         type: 'live',
-        title: l.title.text,
+        title: l.title?.text || 'タイトルなし',
         author: l.author?.name || '不明なチャンネル',
         views: l.view_count || 'N/A',
-        thumbnailUrl: l.thumbnails[0].url,
-      }));
-
-    const playlists = (searchResults.playlists ?? [])
-      .filter((p: any) => p.id && p.thumbnails && p.title)
-      .map((p: any) => ({
+        thumbnailUrl: l.thumbnails?.[0]?.url || '',
+      })),
+      ...(searchResults.playlists as any[] ?? []).map((p: any) => ({
         id: p.id,
         type: 'playlist',
-        title: p.title.text,
+        title: p.title?.text || 'タイトルなし',
         author: p.author?.name || '不明なチャンネル',
         views: 'N/A',
-        thumbnailUrl: p.thumbnails[0].url,
-      }));
-
-    const movie = (searchResults.movie ?? [])
-      .filter((m: any) => m.id && m.thumbnails && m.title)
-      .map((m: any) => ({
+        thumbnailUrl: p.thumbnails?.[0]?.url || '',
+      })),
+      ...(searchResults.movie as any[] ?? []).map((m: any) => ({
         id: m.id,
         type: 'movie',
-        title: m.title.text,
+        title: m.title?.text || 'タイトルなし',
         author: m.author?.name || '不明なチャンネル',
         views: 'N/A',
-        thumbnailUrl: m.thumbnails[0].url,
-      }));
-
-    const short_videos = (searchResults.short_videos ?? [])
-      .filter((s: any) => s.id && s.thumbnails && s.title)
-      .map((s: any) => ({
+        thumbnailUrl: m.thumbnails?.[0]?.url || '',
+      })),
+      ...(searchResults.short_videos as any[] ?? []).map((s: any) => ({
         id: s.id,
         type: 'short_video',
-        title: s.title.text,
+        title: s.title?.text || 'タイトルなし',
         author: s.author?.name || '不明なチャンネル',
         views: 'N/A',
-        thumbnailUrl: s.thumbnails[0].url,
-      }));
-
-    // すべての配列を結合
-    const results = [...videos, ...channels, ...live, ...playlists, ...movie, ...short_videos];
+        thumbnailUrl: s.thumbnails?.[0]?.url || '',
+      })),
+    ];
     
     res.status(200).json(results);
   } catch (error) {
