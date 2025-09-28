@@ -19,7 +19,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const searchResults = await ytsr(searchFilter.url, { limit: 20 });
 
     const results = searchResults.items.map((item) => {
-      // itemをany型として扱うことで、プロパティの存在を気にしないようにする
       if ((item as any).type === 'video') {
         return {
           id: (item as any).id,
@@ -30,7 +29,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           thumbnailUrl: (item as any).bestThumbnail?.url,
         };
       } else if ((item as any).type === 'channel') {
-        // channel オブジェクトには直接idプロパティがないため、URLから抽出
         const channelUrl = (item as any).url;
         const channelId = channelUrl ? channelUrl.split('/').pop() : null;
         
@@ -48,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     res.status(200).json(results);
   } catch (error) {
-    console.error('API Error:', error);
-    res.status(500).json({ error: 'Failed to search YouTube with ytsr' });
+      console.error('API Error:', error);
+      res.status(500).json({ error: 'Failed to search YouTube with ytsr' });
   }
 }
