@@ -1,3 +1,5 @@
+// src/lib/youtubei.ts
+
 import { Innertube, UniversalCache } from 'youtubei.js';
 
 let youtube: Innertube;
@@ -8,7 +10,8 @@ export async function getYouTubeClient() {
       cache: new UniversalCache(false),
       generate_session_locally: true,
       cookie: undefined,
-      device_mode: undefined,
+      // 存在しないプロパティを削除
+      // device_mode: undefined,
     });
   }
   return youtube;
