@@ -19,29 +19,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const searchResults = await ytsr(searchFilter.url, { limit: 20 });
 
     const results = searchResults.items.map((item) => {
-      // ytsrはアイテムのタイプごとに異なる構造を持つ
-      // 共通のプロパティを抽出して統一する
       if (item.type === 'video') {
         return {
-          id: item.id,
+          id: (item as any).id,
           type: 'video',
-          title: item.title,
+          title: (item as any).title,
           author: (item as any).author?.name || '不明なチャンネル',
           views: (item as any).views,
           thumbnailUrl: (item as any).bestThumbnail.url,
         };
       } else if (item.type === 'channel') {
+        // channel オブジェクトでは "id" プロパティが存在しないため、"url"からIDを抽出する
+        const channelUrl = (item as any).url;
+        const channelId = channelUrl ? channelUrl.split('/').pop() : null;
+        
         return {
-          id: item.id,
+          id: channelId,
           type: 'channel',
-          title: item.name,
-          author: item.name,
+          title: (item as any).name,
+          author: (item as any).name,
           views: 'N/A',
           thumbnailUrl: (item as any).bestAvatar.url,
         };
       }
       return null;
-    }).filter(Boolean); // null を削除する
+    }).filter(Boolean);
 
     res.status(200).json(results);
   } catch (error) {
