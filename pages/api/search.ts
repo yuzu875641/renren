@@ -1,7 +1,7 @@
 // pages/api/search.ts
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getYouTubeClient } from '@/lib/youtubei';
+import ytsr from 'ytsr';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { q } = req.query;
@@ -11,41 +11,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const youtube = await getYouTubeClient();
-    const searchResults = await youtube.search(q as string);
+    const filters = await ytsr.getFilters(q as string);
+    const searchFilter = filters.get('Type')?.get('Video');
+    if (!searchFilter?.url) {
+      return res.status(404).json({ error: 'No video filter found' });
+    }
+    const searchResults = await ytsr(searchFilter.url, { limit: 20 });
 
-    // searchResults を `any` 型として扱い、存在しないプロパティのアクセスエラーを回避
-    const results = [
-      ...(searchResults.videos as any[] ?? []).map((v: any) => ({
-        id: v.id,
-        type: 'video',
-        title: v.title?.text || 'タイトルなし',
-        author: v.author?.name || '不明なチャンネル',
-        views: v.metadata?.view_count || 'N/A',
-        thumbnailUrl: v.thumbnails?.[0]?.url || '',
-      })),
-      ...(searchResults.channels as any[] ?? []).map((c: any) => ({
-        id: c.id,
-        type: 'channel',
-        title: c.title?.text || 'タイトルなし',
-        author: c.title?.text || '不明なチャンネル',
-        views: 'N/A',
-        thumbnailUrl: c.thumbnails?.[0]?.url || '',
-      })),
-      // liveプロパティのコードを完全に削除
-      ...(searchResults.playlists as any[] ?? []).map((p: any) => ({
-        id: p.id,
-        type: 'playlist',
-        title: p.title?.text || 'タイトルなし',
-        author: p.author?.name || '不明なチャンネル',
-        views: 'N/A',
-        thumbnailUrl: p.thumbnails?.[0]?.url || '',
-      })),
-    ];
-    
+    const results = searchResults.items.map((item) => {
+      // ytsrはアイテムのタイプごとに異なる構造を持つ
+      // 共通のプロパティを抽出して統一する
+      if (item.type === 'video') {
+        return {
+          id: item.id,
+          type: 'video',
+          title: item.title,
+          author: (item as any).author?.name || '不明なチャンネル',
+          views: (item as any).views,
+          thumbnailUrl: (item as any).bestThumbnail.url,
+        };
+      } else if (item.type === 'channel') {
+        return {
+          id: item.id,
+          type: 'channel',
+          title: item.name,
+          author: item.name,
+          views: 'N/A',
+          thumbnailUrl: (item as any).bestAvatar.url,
+        };
+      }
+      return null;
+    }).filter(Boolean); // null を削除する
+
     res.status(200).json(results);
   } catch (error) {
     console.error('API Error:', error);
-    res.status(500).json({ error: 'Failed to search YouTube with youtubei.js' });
+    res.status(500).json({ error: 'Failed to search YouTube with ytsr' });
   }
 }
