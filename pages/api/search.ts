@@ -41,22 +41,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         views: 'N/A',
         thumbnailUrl: p.thumbnails?.[0]?.url || '',
       })),
-      ...(searchResults.movie as any[] ?? []).map((m: any) => ({
-        id: m.id,
-        type: 'movie',
-        title: m.title?.text || 'タイトルなし',
-        author: m.author?.name || '不明なチャンネル',
-        views: 'N/A',
-        thumbnailUrl: m.thumbnails?.[0]?.url || '',
-      })),
-      ...(searchResults.short_videos as any[] ?? []).map((s: any) => ({
-        id: s.id,
-        type: 'short_video',
-        title: s.title?.text || 'タイトルなし',
-        author: s.author?.name || '不明なチャンネル',
-        views: 'N/A',
-        thumbnailUrl: s.thumbnails?.[0]?.url || '',
-      })),
     ];
     
     res.status(200).json(results);
