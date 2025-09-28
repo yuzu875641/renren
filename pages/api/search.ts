@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const youtube = await getYouTubeClient();
     const searchResults = await youtube.search(q as string);
 
-    // searchResults を `any` 型として扱い、プロパティの存在を気にしないようにする
+    // searchResults を `any` 型として扱い、存在しないプロパティのアクセスエラーを回避
     const results = [
       ...(searchResults.videos as any[] ?? []).map((v: any) => ({
         id: v.id,
@@ -32,14 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         views: 'N/A',
         thumbnailUrl: c.thumbnails?.[0]?.url || '',
       })),
-      ...(searchResults.live as any[] ?? []).map((l: any) => ({
-        id: l.id,
-        type: 'live',
-        title: l.title?.text || 'タイトルなし',
-        author: l.author?.name || '不明なチャンネル',
-        views: l.view_count || 'N/A',
-        thumbnailUrl: l.thumbnails?.[0]?.url || '',
-      })),
+      // liveプロパティのコードを完全に削除
       ...(searchResults.playlists as any[] ?? []).map((p: any) => ({
         id: p.id,
         type: 'playlist',
