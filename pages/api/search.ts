@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getYouTubeClient } from '../../lib/youtubei';
+import { getYouTubeClient } from '../lib/youtubei';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { q } = req.query;
